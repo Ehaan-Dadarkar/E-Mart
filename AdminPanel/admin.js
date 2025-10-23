@@ -5,7 +5,7 @@ const productsTable = document.getElementById("products-table");
 const customersTable = document.getElementById("customers-table");
 const ordersTable = document.getElementById("orders-table");
 // Replace with your Railway deployment URL (include https://)
-const API_BASE_URL = "https://e-mart-production-f8b1.up.railway.app";
+const API_BASE_URL = "https://e-mart-production-78cf.up.railway.app";
 
 // --- NAV HANDLERS ---
 document.getElementById("products-link").addEventListener("click", () => {

@@ -1,5 +1,5 @@
 // Base URL for Railway deployment
-const API_BASE_URL = "https://e-mart-production-f8b1.up.railway.app";
+const API_BASE_URL = "https://e-mart-production-78cf.up.railway.app";
 
 // DOM Elements
 const productListDiv = document.getElementById("product-list");
