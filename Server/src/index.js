@@ -26,7 +26,7 @@ const NODE_ENV = process.env.NODE_ENV || "development";
 // Allowed CORS origins (comma-separated in .env)
 const CORS_ORIGINS = (
   process.env.CORS_ORIGIN ||
-  "http://localhost:3000,https://e-martshop.vercel.app,http://127.0.0.1:5500/AdminPanel/AdminPanel.html"
+  "http://localhost:3000,https://e-martshop.vercel.app,http://127.0.0.1:5500"
 ).split(",");
 
 // Security middleware
