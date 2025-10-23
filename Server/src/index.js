@@ -16,12 +16,14 @@ const authRoutes = require("./routes/auth");
 
 const app = express();
 
-// Trust proxy for rate-limiting on Railway/Vercel
+// Trust proxy for correct client IP detection (needed for rate-limiting on Railway/Vercel)
 app.set("trust proxy", 1);
 
 // Environment variables
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || "development";
+
+// Allowed CORS origins (comma-separated in .env)
 const CORS_ORIGINS = (
   process.env.CORS_ORIGIN ||
   "http://localhost:3000,https://e-martshop.vercel.app"
@@ -34,21 +36,20 @@ app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Logging
+// Logging middleware
 app.use(logger);
 
 // CORS configuration
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true); // Allow server-to-server requests
-      if (CORS_ORIGINS.indexOf(origin) === -1) {
-        return callback(
-          new Error(`CORS policy does not allow access from origin ${origin}`),
-          false
-        );
-      }
-      return callback(null, true);
+      if (!origin) return callback(null, true); // allow server-to-server requests (Postman, etc.)
+      if (CORS_ORIGINS.includes(origin)) return callback(null, true);
+      console.warn(`Blocked CORS request from origin: ${origin}`);
+      return callback(
+        new Error(`CORS policy does not allow access from origin ${origin}`),
+        false
+      );
     },
     credentials: true,
   })
@@ -57,7 +58,7 @@ app.use(
 // Rate limiting
 app.use(
   rateLimit({
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 min
     max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
     message: "Too many requests from this IP, please try again later.",
   })
@@ -71,7 +72,7 @@ if (NODE_ENV === "development") {
   });
 }
 
-// Routes
+// API Routes
 app.use("/api/customers", customerRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
@@ -96,8 +97,13 @@ app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
 
-// Error handler
-app.use(errorHandler);
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err);
+  res
+    .status(err.status || 500)
+    .json({ message: err.message || "Internal Server Error" });
+});
 
 // Start server
 app.listen(PORT, () => {
