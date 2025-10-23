@@ -7,9 +7,10 @@ const { validateProduct } = require("../middleware/validation");
 router.get("/", async (req, res) => {
   try {
     const [products] = await db.query("SELECT * FROM products");
-    res.json(products);
+    res.json(products || []);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error fetching products:", error);
+    res.status(500).json({ message: "Failed to fetch products" });
   }
 });
 
@@ -19,13 +20,13 @@ router.get("/:id", async (req, res) => {
     const [product] = await db.query("SELECT * FROM products WHERE id = ?", [
       req.params.id,
     ]);
-    if (product.length > 0) {
-      res.json(product[0]);
-    } else {
-      res.status(404).json({ message: "Product not found" });
+    if (!product || product.length === 0) {
+      return res.status(404).json({ message: "Product not found" });
     }
+    res.json(product[0]);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(`Error fetching product ${req.params.id}:`, error);
+    res.status(500).json({ message: "Failed to fetch product" });
   }
 });
 
@@ -42,7 +43,8 @@ router.post("/", validateProduct, async (req, res) => {
     ]);
     res.status(201).json(newProduct[0]);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error("Error creating product:", error);
+    res.status(500).json({ message: "Failed to create product" });
   }
 });
 
@@ -54,17 +56,19 @@ router.put("/:id", validateProduct, async (req, res) => {
       "UPDATE products SET name = ?, price = ?, category = ?, inStock = ?, imageUrl = ? WHERE id = ?",
       [name, price, category, inStock, imageUrl || null, req.params.id]
     );
-    if (result.affectedRows > 0) {
-      const [updatedProduct] = await db.query(
-        "SELECT * FROM products WHERE id = ?",
-        [req.params.id]
-      );
-      res.json(updatedProduct[0]);
-    } else {
-      res.status(404).json({ message: "Product not found" });
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Product not found" });
     }
+
+    const [updatedProduct] = await db.query(
+      "SELECT * FROM products WHERE id = ?",
+      [req.params.id]
+    );
+    res.json(updatedProduct[0]);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error(`Error updating product ${req.params.id}:`, error);
+    res.status(500).json({ message: "Failed to update product" });
   }
 });
 
@@ -74,13 +78,13 @@ router.delete("/:id", async (req, res) => {
     const [result] = await db.query("DELETE FROM products WHERE id = ?", [
       req.params.id,
     ]);
-    if (result.affectedRows > 0) {
-      res.status(204).end();
-    } else {
-      res.status(404).json({ message: "Product not found" });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Product not found" });
     }
+    res.status(204).end();
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(`Error deleting product ${req.params.id}:`, error);
+    res.status(500).json({ message: "Failed to delete product" });
   }
 });
 
