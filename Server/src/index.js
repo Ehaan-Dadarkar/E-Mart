@@ -25,12 +25,6 @@ const CORS_ORIGINS = (
   "http://localhost:3000,https://e-martshop.vercel.app"
 ).split(",");
 
-// Rate limiting
-const RATE_LIMIT_WINDOW_MS =
-  parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000; // 15 min
-const RATE_LIMIT_MAX_REQUESTS =
-  parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100;
-
 // Security middleware
 app.use(helmet());
 
@@ -45,7 +39,7 @@ app.use(logger);
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // Allow Postman, server-to-server
+      if (!origin) return callback(null, true); // allow server-to-server or Postman
       if (CORS_ORIGINS.indexOf(origin) === -1) {
         console.warn(`Blocked CORS request from origin: ${origin}`);
         return callback(
@@ -62,8 +56,8 @@ app.use(
 // Rate limiter
 app.use(
   rateLimit({
-    windowMs: RATE_LIMIT_WINDOW_MS,
-    max: RATE_LIMIT_MAX_REQUESTS,
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
     message: "Too many requests from this IP, please try again later.",
   })
 );
@@ -96,12 +90,17 @@ app.get("/", (req, res) => {
   });
 });
 
-// Error handling middleware
-app.use(errorHandler);
-
 // Handle unknown routes (404)
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
+});
+
+// Error handling middleware (500)
+app.use((err, req, res, next) => {
+  console.error("Server error:", err);
+  res
+    .status(err.status || 500)
+    .json({ message: err.message || "Internal Server Error" });
 });
 
 // Start server
