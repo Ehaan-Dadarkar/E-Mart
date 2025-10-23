@@ -1,16 +1,14 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-// Import custom middleware
+
+// Custom middleware
 const logger = require("./middleware/logger");
 const errorHandler = require("./middleware/errorHandler");
-const {
-  validateCustomer,
-  validateProduct,
-} = require("./middleware/validation");
 
-// Import routes
+// Routes
 const customerRoutes = require("./routes/customers");
 const productRoutes = require("./routes/products");
 const orderRoutes = require("./routes/orders");
@@ -18,43 +16,54 @@ const authRoutes = require("./routes/auth");
 
 const app = express();
 
+// Trust proxy for rate-limiting on Railway/Vercel
+app.set("trust proxy", 1);
+
 // Environment variables
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || "development";
-const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:3000";
-const RATE_LIMIT_WINDOW_MS =
-  parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000;
-const RATE_LIMIT_MAX_REQUESTS =
-  parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100;
+const CORS_ORIGINS = (
+  process.env.CORS_ORIGIN ||
+  "http://localhost:3000,https://e-martshop.vercel.app"
+).split(",");
+
 // Security middleware
-app.use(helmet()); // Security headers
+app.use(helmet());
+
+// Body parsing
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Logging
+app.use(logger);
+
+// CORS configuration
 app.use(
   cors({
-    origin: [
-      "http://127.0.0.1:5500",
-      "http://localhost:5500",
-      "http://localhost:3000",
-    ],
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // Allow server-to-server requests
+      if (CORS_ORIGINS.indexOf(origin) === -1) {
+        return callback(
+          new Error(`CORS policy does not allow access from origin ${origin}`),
+          false
+        );
+      }
+      return callback(null, true);
+    },
     credentials: true,
   })
 );
 
-// Rate limiter
-const limiter = rateLimit({
-  windowMs: RATE_LIMIT_WINDOW_MS,
-  max: RATE_LIMIT_MAX_REQUESTS,
-  message: "Too many requests from this IP, please try again later.",
-});
-app.use(limiter);
+// Rate limiting
+app.use(
+  rateLimit({
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+    message: "Too many requests from this IP, please try again later.",
+  })
+);
 
-// Body parsing middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Logging middleware
-app.use(logger);
-
-// Request logging in development
+// Development request logging
 if (NODE_ENV === "development") {
   app.use((req, res, next) => {
     console.log(`${req.method} ${req.url}`);
@@ -71,13 +80,23 @@ app.use("/api/auth", authRoutes);
 // Root endpoint
 app.get("/", (req, res) => {
   res.json({
-    Customers: "/api/customers",
-    Products: "/api/products",
+    message: "E-Mart API",
+    routes: {
+      customers: "/api/customers",
+      products: "/api/products",
+      orders: "/api/orders",
+      auth: "/api/auth",
+    },
     environment: NODE_ENV,
   });
 });
 
-// Error handling middleware
+// 404 for unknown routes
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
+});
+
+// Error handler
 app.use(errorHandler);
 
 // Start server
