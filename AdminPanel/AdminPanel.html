@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>E-commerce Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        background-color: #030712;
+      }
+      .hidden {
+        display: none;
+      }
+      .modal-bg {
+        background: rgba(0, 0, 0, 0.5);
+      }
+      .table-actions button {
+        margin-right: 0.5rem;
+      }
+      .nav-link.active {
+        text-decoration: underline;
+        color: #3b82f6;
+      }
+      table th,
+      table td {
+        color: white;
+        padding: 0.75rem;
+        border: 1px solid #555;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      table thead {
+        background-color: #1a1f2b;
+      }
+      .table-container {
+        margin-bottom: 2rem;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        border: 1px solid #555;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      }
+    </style>
+  </head>
+  <body class="font-sans text-white">
+    <!-- Navbar -->
+    <nav
+      class="bg-gray-900 text-white p-4 flex justify-between items-center shadow-lg"
+    >
+      <span class="font-bold text-lg">Admin Panel</span>
+      <div class="space-x-4">
+        <button id="products-link" class="nav-link active font-medium">
+          Products
+        </button>
+        <button id="customers-link" class="nav-link font-medium">
+          Customers
+        </button>
+        <button id="orders-link" class="nav-link font-medium">Orders</button>
+      </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container mx-auto my-8 px-4">
+      <!-- Products Section -->
+      <div id="products-section" class="bg-[#030712] shadow-lg rounded-lg p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-semibold">Products</h2>
+          <button
+            id="add-product-btn"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow-md transition"
+          >
+            + Add Product
+          </button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Category</th>
+                <th>Stock</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="products-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Customers Section -->
+      <div
+        id="customers-section"
+        class="hidden bg-[#030712] shadow-lg rounded-lg p-6 mt-8"
+      >
+        <h2 class="text-2xl font-semibold mb-4">Customers</h2>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="customers-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Orders Section -->
+      <div
+        id="orders-section"
+        class="hidden bg-[#030712] shadow-lg rounded-lg p-6 mt-8"
+      >
+        <h2 class="text-2xl font-semibold mb-4">Orders</h2>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>User</th>
+                <th>Total</th>
+                <th>Items</th>
+                <th>Address</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="orders-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modals -->
+    <div
+      id="productModal"
+      class="hidden fixed inset-0 flex justify-center items-center modal-bg z-50"
+    >
+      <div class="bg-white rounded-lg shadow-2xl w-96 p-6 text-black">
+        <h3 class="text-xl font-semibold mb-4">Product</h3>
+        <form id="product-form" class="space-y-3">
+          <input type="hidden" id="product-id" />
+          <input
+            type="text"
+            id="product-name"
+            placeholder="Name"
+            class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
+            required
+          />
+          <input
+            type="number"
+            id="product-price"
+            placeholder="Price"
+            class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
+            step="0.01"
+            required
+          />
+          <input
+            type="text"
+            id="product-category"
+            placeholder="Category"
+            class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
+            required
+          />
+          <input
+            type="text"
+            id="product-image"
+            placeholder="Image URL"
+            class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
+          />
+          <select
+            id="product-stock"
+            class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
+          >
+            <option value="1">In Stock</option>
+            <option value="0">Out of Stock</option>
+          </select>
+          <div class="flex justify-end space-x-2 mt-3">
+            <button
+              type="submit"
+              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow transition"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded shadow transition"
+              onclick="closeModal('productModal')"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div
+      id="customerModal"
+      class="hidden fixed inset-0 flex justify-center items-center modal-bg z-50"
+    >
+      <div class="bg-white rounded-lg shadow-2xl w-96 p-6 text-black">
+        <h3 class="text-xl font-semibold mb-4">Edit Customer</h3>
+        <form id="customer-form" class="space-y-3">
+          <input type="hidden" id="customer-id" />
+          <input
+            type="text"
+            id="customer-name"
+            placeholder="Name"
+            class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
+            required
+          />
+          <input
+            type="email"
+            id="customer-email"
+            placeholder="Email"
+            class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
+            required
+          />
+          <input
+            type="tel"
+            id="customer-phone"
+            placeholder="Phone"
+            class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
+          />
+          <div class="flex justify-end space-x-2 mt-3">
+            <button
+              type="submit"
+              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow transition"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded shadow transition"
+              onclick="closeModal('customerModal')"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div
+      id="orderModal"
+      class="hidden fixed inset-0 flex justify-center items-center modal-bg z-50"
+    >
+      <div class="bg-white rounded-lg shadow-2xl w-96 p-6 text-black">
+        <h3 class="text-xl font-semibold mb-4">Edit Order</h3>
+        <form id="order-form" class="space-y-3">
+          <input type="hidden" id="order-id" />
+          <input
+            type="text"
+            id="order-customer-name"
+            placeholder="Customer Name"
+            class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
+            required
+          />
+          <input
+            type="text"
+            id="order-address"
+            placeholder="Street Address"
+            class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
+            required
+          />
+          <input
+            type="text"
+            id="order-city"
+            placeholder="City"
+            class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
+            required
+          />
+          <input
+            type="text"
+            id="order-state"
+            placeholder="State"
+            class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
+            required
+          />
+          <input
+            type="text"
+            id="order-zip"
+            placeholder="Zip Code"
+            class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
+            required
+          />
+          <input
+            type="number"
+            id="order-total"
+            placeholder="Total"
+            class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
+            step="0.01"
+            required
+          />
+          <div class="flex justify-end space-x-2 mt-3">
+            <button
+              type="submit"
+              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow transition"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded shadow transition"
+              onclick="closeModal('orderModal')"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        function closeModal(modalId) {
+          document.getElementById(modalId).classList.add("hidden");
+        }
+
+        const addProductBtn = document.getElementById("add-product-btn");
+        if (addProductBtn) {
+          addProductBtn.addEventListener("click", () => {
+            document.getElementById("product-id").value = "";
+            document.getElementById("product-name").value = "";
+            document.getElementById("product-price").value = "";
+            document.getElementById("product-category").value = "";
+            document.getElementById("product-stock").value = "1";
+            document.getElementById("product-image").value = "";
+            document.getElementById("productModal").classList.remove("hidden");
+          });
+        }
+
+        // Tab switching
+        const sections = ["products", "customers", "orders"];
+        sections.forEach((sec) => {
+          const link = document.getElementById(sec + "-link");
+          const section = document.getElementById(sec + "-section");
+          if (link && section) {
+            link.addEventListener("click", () => {
+              sections.forEach((s) => {
+                document.getElementById(s + "-section").classList.add("hidden");
+                document.getElementById(s + "-link").classList.remove("active");
+              });
+              section.classList.remove("hidden");
+              link.classList.add("active");
+            });
+          }
+        });
+
+        window.closeModal = closeModal;
+      });
+    </script>
+    <script src="admin.js"></script>
+  </body>
+</html>
