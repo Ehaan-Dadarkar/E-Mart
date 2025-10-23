@@ -1,0 +1,44 @@
+```
+└── 📁PrevProject
+    └── 📁AdminPanel
+        ├── admin.js
+        ├── Admincss.css
+        ├── AdminPanel.html
+    └── 📁client
+        ├── index.html
+        ├── script.js
+    └── 📁Server
+        └── 📁.github
+            ├── copilot-instructions.md
+        └── 📁.vscode
+            ├── tasks.json
+        └── 📁src
+            └── 📁config
+                ├── database.js
+                ├── database.sql
+            └── 📁controllers
+                ├── customerController.js
+                ├── productController.js
+            └── 📁middleware
+                ├── errorHandler.js
+                ├── example.js
+                ├── logger.js
+                ├── validation.js
+            └── 📁models
+                ├── customer.js
+                ├── product.js
+            └── 📁routes
+                ├── auth.js
+                ├── customers.js
+                ├── orders.js
+                ├── products.js
+            ├── index.js
+            ├── test.js
+        ├── .env
+        ├── package-lock.json
+        ├── package.json
+        ├── README.md
+    ├── package-lock.json
+    ├── package.json
+    └── README.md
+```

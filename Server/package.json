@@ -24,7 +24,8 @@
         "express-rate-limit": "^8.0.1",
         "helmet": "^7.0.0",
         "morgan": "^1.10.0",
-        "mysql2": "^3.14.3"
+        "mysql2": "^3.14.3",
+        "node-fetch": "^3.3.2"
     },
     "devDependencies": {
         "nodemon": "^3.0.0"
