@@ -1,26 +1,44 @@
 require("dotenv").config();
 const mysql = require("mysql2/promise");
+const url = require("url");
 
-// Create MySQL connection pool
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME, // must match your Railway DB
-  port: process.env.DB_PORT || 3306,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-});
+let connectionConfig = {};
 
-// Test connection immediately
+if (process.env.MYSQL_URL) {
+  const params = new URL(process.env.MYSQL_URL);
+  connectionConfig = {
+    host: params.hostname,
+    port: params.port,
+    user: params.username,
+    password: params.password,
+    database: params.pathname.replace("/", ""),
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+  };
+} else {
+  connectionConfig = {
+    host: process.env.MYSQL_HOST || "localhost",
+    port: process.env.MYSQL_PORT || 3306,
+    user: process.env.MYSQL_USER || "root",
+    password: process.env.MYSQL_PASSWORD || "",
+    database: process.env.MYSQL_DATABASE || "ecommerce_db",
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+  };
+}
+
+const pool = mysql.createPool(connectionConfig);
+
+// Test connection
 (async () => {
   try {
-    const [rows] = await pool.query("SELECT 1 + 1 AS test");
-    console.log("✅ Database connected successfully:", rows[0]);
+    const conn = await pool.getConnection();
+    console.log("✅ Database connected successfully");
+    conn.release();
   } catch (err) {
     console.error("❌ Database connection failed:", err.message);
-    process.exit(1); // Exit if DB connection fails
   }
 })();
 
