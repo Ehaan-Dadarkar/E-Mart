@@ -2,7 +2,7 @@
 const fetch = require("node-fetch");
 
 // Replace with your Railway API URL including https
-const API_BASE_URL = "https://e-mart-production-a6ef.up.railway.app";
+const API_BASE_URL = "https://e-mart-production-f8b1.up.railway.app/";
 const ENDPOINT = "/api/customers";
 
 async function fetchCustomers() {

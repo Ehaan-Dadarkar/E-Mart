@@ -4,6 +4,8 @@ const ordersSection = document.getElementById("orders-section");
 const productsTable = document.getElementById("products-table");
 const customersTable = document.getElementById("customers-table");
 const ordersTable = document.getElementById("orders-table");
+// Replace with your Railway deployment URL (include https://)
+const API_BASE_URL = "https://e-mart-production-f8b1.up.railway.app";
 
 // --- NAV HANDLERS ---
 document.getElementById("products-link").addEventListener("click", () => {
@@ -35,7 +37,7 @@ function setActiveNav(id) {
 // --- PRODUCTS ---
 async function loadProducts() {
   try {
-    const res = await fetch("http://localhost:3000/api/products");
+    const res = await fetch(`${API_BASE_URL}/api/products`);
     if (!res.ok) throw new Error("Failed to fetch products");
     const data = await res.json();
 
@@ -90,8 +92,8 @@ document
     };
     const method = id ? "PUT" : "POST";
     const url = id
-      ? `http://localhost:3000/api/products/${id}`
-      : "http://localhost:3000/api/products";
+      ? `${API_BASE_URL}api/products/${id}`
+      : `${API_BASE_URL}/api/products`;
 
     const res = await fetch(url, {
       method,
@@ -117,7 +119,7 @@ function editProduct(id, name, price, category, stock, imageUrl) {
 
 async function deleteProduct(id) {
   if (!confirm("Delete this product?")) return;
-  await fetch(`http://localhost:3000/api/products/${id}`, { method: "DELETE" });
+  await fetch(`${API_BASE_URL}/api/products/${id}`, { method: "DELETE" });
   loadProducts();
 }
 
@@ -140,7 +142,7 @@ document
       email: document.getElementById("customer-email").value,
       phone: document.getElementById("customer-phone").value,
     };
-    const res = await fetch(`http://localhost:3000/api/customers/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/api/customers/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updatedCustomer),
@@ -156,7 +158,7 @@ document
 
 async function deleteCustomer(id) {
   if (!confirm("Delete this customer?")) return;
-  const res = await fetch(`http://localhost:3000/api/customers/${id}`, {
+  const res = await fetch(`${API_BASE_URL}/api/customers/${id}`, {
     method: "DELETE",
   });
   if (res.ok) loadCustomers();
@@ -167,7 +169,7 @@ async function deleteCustomer(id) {
 }
 
 async function loadCustomers() {
-  const res = await fetch("http://localhost:3000/api/customers");
+  const res = await fetch(`${API_BASE_URL}/api/customers`);
   const data = await res.json();
   customersTable.innerHTML = data
     .map(
@@ -204,7 +206,7 @@ function openEditOrderModal(id, name, address, city, state, zip, total) {
 
 async function loadOrders() {
   try {
-    const res = await fetch("http://localhost:3000/api/orders");
+    const res = await fetch(`${API_BASE_URL}/api/orders`);
     if (!res.ok) throw new Error("Failed to fetch orders");
     const orders = await res.json();
     ordersTable.innerHTML = orders
@@ -243,7 +245,7 @@ async function loadOrders() {
 
 async function deleteOrder(id) {
   if (!confirm("Are you sure you want to delete this order?")) return;
-  const res = await fetch(`http://localhost:3000/api/orders/${id}`, {
+  const res = await fetch(`${API_BASE_URL}/api/orders/${id}`, {
     method: "DELETE",
   });
   if (res.ok) loadOrders();
@@ -264,7 +266,7 @@ document.getElementById("order-form").addEventListener("submit", async (e) => {
     customer_zip: document.getElementById("order-zip").value,
     total: parseFloat(document.getElementById("order-total").value),
   };
-  const res = await fetch(`http://localhost:3000/api/orders/${id}`, {
+  const res = await fetch(`${API_BASE_URL}/api/orders/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(updatedOrder),

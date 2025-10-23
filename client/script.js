@@ -1,3 +1,6 @@
+// Base URL for Railway deployment
+const API_BASE_URL = "https://e-mart-production-f8b1.up.railway.app";
+
 // DOM Elements
 const productListDiv = document.getElementById("product-list");
 const cartItemsList = document.getElementById("cart-items");
@@ -114,7 +117,7 @@ function updateCartBadge() {
 
 // FETCH PRODUCTS & RENDER
 let products = [];
-fetch("http://localhost:3000/api/products")
+fetch(`${API_BASE_URL}/api/products`)
   .then((res) => res.json())
   .then((data) => {
     products = data;
@@ -153,18 +156,17 @@ function renderProducts() {
           </button>
         </div>
       </div>
-    </div>`
+    </div>
+  `
     )
     .join("");
 
-  // ADD TO CART LISTENERS
   document.querySelectorAll(".add-to-cart").forEach((btn) => {
     btn.addEventListener("click", () => {
       const productId = parseInt(btn.dataset.productId);
       const product = products.find((p) => p.id === productId);
       if (!product || Number(product.inStock) !== 1)
         return alert("This product is out of stock.");
-
       const existing = cart.find((item) => item.id === productId);
       if (existing) {
         existing.quantity++;
@@ -178,7 +180,6 @@ function renderProducts() {
           total: parseFloat(product.price).toFixed(2),
         });
       }
-
       localStorage.setItem("cart", JSON.stringify(cart));
       updateCartDisplay();
       updateCartBadge();
@@ -197,7 +198,7 @@ function updateCartDisplay() {
       "list-group-item d-flex justify-content-between align-items-center bg-gray-800 text-white";
     li.style = "border-radius:15px";
     li.innerHTML = `
-      <div class="d-flex align-items-center gap-2 " >
+      <div class="d-flex align-items-center gap-2">
         <span>${item.name}</span>
         <div class="quantity-control d-flex align-items-center" style="padding-left: 20px;">
           <button class="btn btn-sm btn-secondary quantity-btn minus" data-index="${index}">-</button>
@@ -255,7 +256,7 @@ document.getElementById("checkout-button").addEventListener("click", () => {
     total: item.total,
   }));
 
-  fetch("http://localhost:3000/api/orders", {
+  fetch(`${API_BASE_URL}/api/orders`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ...address, userId, total, items: itemsPayload }),
@@ -284,7 +285,7 @@ loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const email = document.getElementById("login-email").value;
   const password = document.getElementById("login-password").value;
-  const res = await fetch("http://localhost:3000/api/auth/login", {
+  const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -306,7 +307,7 @@ registerForm.addEventListener("submit", async (e) => {
   const email = document.getElementById("register-email").value;
   const phone = document.getElementById("register-phone").value;
   const password = document.getElementById("register-password").value;
-  const res = await fetch("http://localhost:3000/api/auth/register", {
+  const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, email, phone, password }),
