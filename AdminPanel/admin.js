@@ -4,7 +4,8 @@ const ordersSection = document.getElementById("orders-section");
 const productsTable = document.getElementById("products-table");
 const customersTable = document.getElementById("customers-table");
 const ordersTable = document.getElementById("orders-table");
-// Replace with your Railway deployment URL (include https://)
+
+// Replace with your Railway deployment URL
 const API_BASE_URL = "https://e-mart-production-78cf.up.railway.app";
 
 // --- NAV HANDLERS ---
@@ -34,20 +35,38 @@ function setActiveNav(id) {
   document.getElementById(id).classList.add("active");
 }
 
+// --- FETCH HELPER ---
+async function fetchAPI(endpoint, options = {}) {
+  try {
+    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+      credentials: "include", // important if your API uses cookies/session
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.message || "API request failed");
+    }
+    return await res.json();
+  } catch (err) {
+    console.error(`Error fetching ${endpoint}:`, err.message);
+    throw err;
+  }
+}
+
 // --- PRODUCTS ---
 async function loadProducts() {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/products`);
-    if (!res.ok) throw new Error("Failed to fetch products");
-    const data = await res.json();
-
+    const data = await fetchAPI("/api/products");
     productsTable.innerHTML = data
       .map((p) => {
         const price = parseFloat(p.price) || 0;
         const imageUrl = p.imageUrl || "";
         const name = p.name || "";
         const category = p.category || "";
-
         return `
 <tr>
   <td>${
@@ -72,108 +91,18 @@ async function loadProducts() {
 </tr>`;
       })
       .join("");
-  } catch (err) {
-    console.error(err);
+  } catch {
     productsTable.innerHTML = `<tr><td colspan="6">Failed to load products</td></tr>`;
   }
 }
 
-document
-  .getElementById("product-form")
-  .addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const id = document.getElementById("product-id").value;
-    const product = {
-      name: document.getElementById("product-name").value,
-      price: parseFloat(document.getElementById("product-price").value),
-      category: document.getElementById("product-category").value,
-      inStock: parseInt(document.getElementById("product-stock").value),
-      imageUrl: document.getElementById("product-image").value,
-    };
-    const method = id ? "PUT" : "POST";
-    const url = id
-      ? `${API_BASE_URL}api/products/${id}`
-      : `${API_BASE_URL}/api/products`;
-
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(product),
-    });
-    if (res.ok) {
-      closeModal("productModal");
-      loadProducts();
-    }
-  });
-
-function editProduct(id, name, price, category, stock, imageUrl) {
-  document.getElementById("product-id").value = id;
-  document.getElementById("product-name").value = decodeURIComponent(name);
-  document.getElementById("product-price").value = price;
-  document.getElementById("product-category").value =
-    decodeURIComponent(category);
-  document.getElementById("product-stock").value = stock;
-  document.getElementById("product-image").value = decodeURIComponent(imageUrl);
-  openModal("productModal");
-}
-
-async function deleteProduct(id) {
-  if (!confirm("Delete this product?")) return;
-  await fetch(`${API_BASE_URL}/api/products/${id}`, { method: "DELETE" });
-  loadProducts();
-}
-
 // --- CUSTOMERS ---
-function openEditCustomerModal(id, name, email, phone) {
-  document.getElementById("customer-id").value = id;
-  document.getElementById("customer-name").value = name;
-  document.getElementById("customer-email").value = email;
-  document.getElementById("customer-phone").value = phone || "";
-  openModal("customerModal");
-}
-
-document
-  .getElementById("customer-form")
-  .addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const id = document.getElementById("customer-id").value;
-    const updatedCustomer = {
-      name: document.getElementById("customer-name").value,
-      email: document.getElementById("customer-email").value,
-      phone: document.getElementById("customer-phone").value,
-    };
-    const res = await fetch(`${API_BASE_URL}/api/customers/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedCustomer),
-    });
-    if (res.ok) {
-      closeModal("customerModal");
-      loadCustomers();
-    } else {
-      const data = await res.json();
-      alert(data.message || "Failed to update customer");
-    }
-  });
-
-async function deleteCustomer(id) {
-  if (!confirm("Delete this customer?")) return;
-  const res = await fetch(`${API_BASE_URL}/api/customers/${id}`, {
-    method: "DELETE",
-  });
-  if (res.ok) loadCustomers();
-  else {
-    const data = await res.json();
-    alert(data.message || "Failed to delete customer");
-  }
-}
-
 async function loadCustomers() {
-  const res = await fetch(`${API_BASE_URL}/api/customers`);
-  const data = await res.json();
-  customersTable.innerHTML = data
-    .map(
-      (c) => `
+  try {
+    const data = await fetchAPI("/api/customers");
+    customersTable.innerHTML = data
+      .map(
+        (c) => `
 <tr>
   <td>${c.id}</td>
   <td>${c.name}</td>
@@ -188,27 +117,17 @@ async function loadCustomers() {
     })">Delete</button>
   </td>
 </tr>`
-    )
-    .join("");
+      )
+      .join("");
+  } catch {
+    customersTable.innerHTML = `<tr><td colspan="5">Failed to load customers</td></tr>`;
+  }
 }
 
 // --- ORDERS ---
-function openEditOrderModal(id, name, address, city, state, zip, total) {
-  document.getElementById("order-id").value = id;
-  document.getElementById("order-customer-name").value = name;
-  document.getElementById("order-address").value = address;
-  document.getElementById("order-city").value = city;
-  document.getElementById("order-state").value = state;
-  document.getElementById("order-zip").value = zip;
-  document.getElementById("order-total").value = total;
-  openModal("orderModal");
-}
-
 async function loadOrders() {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/orders`);
-    if (!res.ok) throw new Error("Failed to fetch orders");
-    const orders = await res.json();
+    const orders = await fetchAPI("/api/orders");
     ordersTable.innerHTML = orders
       .map((o) => {
         let items = [];
@@ -237,64 +156,10 @@ async function loadOrders() {
 </tr>`;
       })
       .join("");
-  } catch (err) {
-    console.error(err);
+  } catch {
     ordersTable.innerHTML = `<tr><td colspan="6">Failed to load orders</td></tr>`;
   }
 }
-
-async function deleteOrder(id) {
-  if (!confirm("Are you sure you want to delete this order?")) return;
-  const res = await fetch(`${API_BASE_URL}/api/orders/${id}`, {
-    method: "DELETE",
-  });
-  if (res.ok) loadOrders();
-  else {
-    const data = await res.json();
-    alert(data.message || "Failed to delete order");
-  }
-}
-
-document.getElementById("order-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const id = document.getElementById("order-id").value;
-  const updatedOrder = {
-    customer_name: document.getElementById("order-customer-name").value,
-    customer_address: document.getElementById("order-address").value,
-    customer_city: document.getElementById("order-city").value,
-    customer_state: document.getElementById("order-state").value,
-    customer_zip: document.getElementById("order-zip").value,
-    total: parseFloat(document.getElementById("order-total").value),
-  };
-  const res = await fetch(`${API_BASE_URL}/api/orders/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(updatedOrder),
-  });
-  if (res.ok) closeModal("orderModal"), loadOrders();
-  else {
-    const data = await res.json();
-    alert(data.message || "Failed to update order");
-  }
-});
-
-// --- MODALS ---
-function openModal(modalId) {
-  document.getElementById(modalId).classList.remove("hidden");
-}
-function closeModal(modalId) {
-  document.getElementById(modalId).classList.add("hidden");
-}
-
-document.getElementById("add-product-btn").addEventListener("click", () => {
-  document.getElementById("product-id").value = "";
-  document.getElementById("product-name").value = "";
-  document.getElementById("product-price").value = "";
-  document.getElementById("product-category").value = "";
-  document.getElementById("product-stock").value = "1";
-  document.getElementById("product-image").value = "";
-  openModal("productModal");
-});
 
 // --- INITIAL LOAD ---
 loadProducts();
