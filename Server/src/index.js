@@ -16,15 +16,18 @@ const authRoutes = require("./routes/auth");
 
 const app = express();
 
-// Trust proxy for correct client IP detection (needed for rate-limiting on Railway/Vercel)
+// Trust proxy for correct client IP detection (needed on Railway/Vercel)
 app.set("trust proxy", 1);
 
 // Environment variables
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 
-// Allowed CORS origins (trim spaces, include admin panel URLs)
-const CORS_ORIGINS = (process.env.CORS_ORIGIN || "")
+// Allowed CORS origins
+const CORS_ORIGINS = (
+  process.env.CORS_ORIGIN ||
+  "http://127.0.0.1:5500,https://admin-ed-mart.vercel.app,https://e-martshop.vercel.app"
+)
   .split(",")
   .map((o) => o.trim());
 
@@ -35,24 +38,15 @@ app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Logging middleware
+// Logging
 app.use(logger);
-
-// Debug: log incoming origin headers
-app.use((req, res, next) => {
-  console.log("Incoming Origin:", req.headers.origin);
-  next();
-});
 
 // CORS configuration
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow server-to-server requests (curl, Postman, etc.)
-      if (!origin) return callback(null, true);
-
+      if (!origin) return callback(null, true); // allow Postman, curl, or file:// requests
       if (CORS_ORIGINS.includes(origin)) return callback(null, true);
-
       console.warn(`Blocked CORS request from origin: ${origin}`);
       return callback(
         new Error(`CORS policy does not allow access from origin ${origin}`),
@@ -107,7 +101,7 @@ app.use((req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error("Server Error:", err);
+  console.error(err);
   res
     .status(err.status || 500)
     .json({ message: err.message || "Internal Server Error" });
