@@ -6,10 +6,6 @@ const rateLimit = require("express-rate-limit");
 // Import custom middleware
 const logger = require("./middleware/logger");
 const errorHandler = require("./middleware/errorHandler");
-const {
-  validateCustomer,
-  validateProduct,
-} = require("./middleware/validation");
 
 // Import routes
 const customerRoutes = require("./routes/customers");
@@ -24,7 +20,7 @@ const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 const CORS_ORIGINS = (
   process.env.CORS_ORIGIN ||
-  "http://localhost:3000,https://e-mart-6mhxt4a7m-ehaan-dadarkars-projects.vercel.app"
+  "http://localhost:3000,https://e-martshop.vercel.app"
 ).split(",");
 const RATE_LIMIT_WINDOW_MS =
   parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000; // 15 min
