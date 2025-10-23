@@ -23,11 +23,10 @@ app.set("trust proxy", 1);
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 
-// Allowed CORS origins (comma-separated in .env)
-const CORS_ORIGINS = (
-  process.env.CORS_ORIGIN ||
-  "http://localhost:3000,https://e-martshop.vercel.app,http://127.0.0.1:5500"
-).split(",");
+// Allowed CORS origins (trim spaces, include admin panel URLs)
+const CORS_ORIGINS = (process.env.CORS_ORIGIN || "")
+  .split(",")
+  .map((o) => o.trim());
 
 // Security middleware
 app.use(helmet());
@@ -39,12 +38,21 @@ app.use(express.urlencoded({ extended: true }));
 // Logging middleware
 app.use(logger);
 
+// Debug: log incoming origin headers
+app.use((req, res, next) => {
+  console.log("Incoming Origin:", req.headers.origin);
+  next();
+});
+
 // CORS configuration
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true); // allow server-to-server requests (Postman, etc.)
+      // Allow server-to-server requests (curl, Postman, etc.)
+      if (!origin) return callback(null, true);
+
       if (CORS_ORIGINS.includes(origin)) return callback(null, true);
+
       console.warn(`Blocked CORS request from origin: ${origin}`);
       return callback(
         new Error(`CORS policy does not allow access from origin ${origin}`),
@@ -99,7 +107,7 @@ app.use((req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err);
+  console.error("Server Error:", err);
   res
     .status(err.status || 500)
     .json({ message: err.message || "Internal Server Error" });
