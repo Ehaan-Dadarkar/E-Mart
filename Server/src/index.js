@@ -18,10 +18,14 @@ const app = express();
 // Environment variables
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || "development";
+
+// Allowed origins for CORS
 const CORS_ORIGINS = (
   process.env.CORS_ORIGIN ||
   "http://localhost:3000,https://e-martshop.vercel.app"
 ).split(",");
+
+// Rate limiting
 const RATE_LIMIT_WINDOW_MS =
   parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000; // 15 min
 const RATE_LIMIT_MAX_REQUESTS =
@@ -30,12 +34,20 @@ const RATE_LIMIT_MAX_REQUESTS =
 // Security middleware
 app.use(helmet());
 
+// Body parsing middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Logging middleware
+app.use(logger);
+
 // CORS configuration
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // allow server-to-server requests
+      if (!origin) return callback(null, true); // Allow Postman, server-to-server
       if (CORS_ORIGINS.indexOf(origin) === -1) {
+        console.warn(`Blocked CORS request from origin: ${origin}`);
         return callback(
           new Error(`CORS policy does not allow access from origin ${origin}`),
           false
@@ -48,21 +60,15 @@ app.use(
 );
 
 // Rate limiter
-const limiter = rateLimit({
-  windowMs: RATE_LIMIT_WINDOW_MS,
-  max: RATE_LIMIT_MAX_REQUESTS,
-  message: "Too many requests from this IP, please try again later.",
-});
-app.use(limiter);
+app.use(
+  rateLimit({
+    windowMs: RATE_LIMIT_WINDOW_MS,
+    max: RATE_LIMIT_MAX_REQUESTS,
+    message: "Too many requests from this IP, please try again later.",
+  })
+);
 
-// Body parsing middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Logging middleware
-app.use(logger);
-
-// Request logging in development
+// Development request logging
 if (NODE_ENV === "development") {
   app.use((req, res, next) => {
     console.log(`${req.method} ${req.url}`);
@@ -79,15 +85,24 @@ app.use("/api/auth", authRoutes);
 // Root endpoint
 app.get("/", (req, res) => {
   res.json({
-    Customers: "/api/customers",
-    Products: "/api/products",
-    Orders: "/api/orders",
+    message: "E-Mart API",
+    routes: {
+      customers: "/api/customers",
+      products: "/api/products",
+      orders: "/api/orders",
+      auth: "/api/auth",
+    },
     environment: NODE_ENV,
   });
 });
 
 // Error handling middleware
 app.use(errorHandler);
+
+// Handle unknown routes (404)
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
+});
 
 // Start server
 app.listen(PORT, () => {
