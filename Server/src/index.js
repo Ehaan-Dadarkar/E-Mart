@@ -76,10 +76,10 @@ app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/auth", authRoutes);
 
-// Root endpoint
+// Root endpoint for testing
 app.get("/", (req, res) => {
   res.json({
-    message: "E-Mart API",
+    message: "E-Mart API is running!",
     routes: {
       customers: "/api/customers",
       products: "/api/products",
@@ -90,12 +90,12 @@ app.get("/", (req, res) => {
   });
 });
 
-// Handle unknown routes (404)
+// Catch 404
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
 
-// Error handling middleware (500)
+// Global error handler
 app.use((err, req, res, next) => {
   console.error("Server error:", err);
   res
